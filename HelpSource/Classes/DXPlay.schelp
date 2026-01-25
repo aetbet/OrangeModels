@@ -1,0 +1,235 @@
+TITLE:: DXPlay
+SUMMARY:: DX7 (and the 6-OP family) preset player
+CATEGORIES:: UGens>Generators>Deterministic
+RELATED:: Classes/SMEmu, Classes/SQArp
+
+DESCRIPTION::
+Based on Mutable Instruments Plaits Orange Model #3~5: 2-voice, 6-operator FM synth with 32 presets.
+
+Original code by: Emilie Gillet (https://github.com/pichenettes/eurorack.git)
+
+The bank editor from Emilie to create the custom bank (https://pichenettes.github.io/plaits-editor/).
+
+
+CLASSMETHODS::
+
+METHOD:: load
+Load a DX7 SysEx bank file and register it with a key.
+
+ARGUMENT:: key
+A Symbol to identify this bank.
+
+ARGUMENT:: path
+Path to the .syx file.
+
+ARGUMENT:: server
+Server to load the buffer on. Defaults to Server.default.
+
+ARGUMENT:: action
+Function to call when loading is complete.
+
+RETURNS:: A DXPlay instance.
+
+METHOD:: new
+Retrieve a previously loaded bank by key.
+
+ARGUMENT:: key
+The Symbol used when loading.
+
+RETURNS:: The DXPlay instance, or throws an error if not found.
+
+METHOD:: free
+Free a loaded bank by key.
+
+METHOD:: freeAll
+Free all loaded banks.
+
+INSTANCEMETHODS::
+
+METHOD:: ar, kr
+
+ARGUMENT:: freq
+Frequency in Hz.
+
+ARGUMENT:: trig
+Trigger signal. When connected (non-zero), two voices alternating on each trigger. When not connected (or 0), a single voice plays as a drone.
+
+ARGUMENT:: velocity
+DX7 velocity (0-1). Controls loudness and/or timbre depending on how each preset is programmed.
+
+ARGUMENT:: timbre
+Brightness/modulator level control (0-1). Affects the level of modulator operators.
+
+ARGUMENT:: morph
+Envelope control (0-1). In drone mode, allows time-travel along the envelopes and modulations. In triggered mode, scales envelope times.
+
+ARGUMENT:: preset
+Preset index within the bank (0-31).
+
+ARGUMENT:: mul
+Output multiplier.
+
+ARGUMENT:: add
+Output offset.
+
+METHOD:: describe
+Print the bank info and all 32 preset names.
+
+METHOD:: presetName
+Get the name of a preset by index.
+
+METHOD:: names
+Array of all 32 preset names.
+
+METHOD:: free
+Free the buffer associated with this bank.
+
+
+EXAMPLES::
+
+CODE::
+// Load a DX7 bank with a key
+DXPlay.load(\builtin1, Platform.userExtensionDir +/+ "OrangeModels/syx/Plaits-01.syx");
+
+DXPlay.load(\builtin2, Platform.userExtensionDir +/+ "OrangeModels/syx/Plaits-02.syx");
+
+DXPlay.load(\builtin3, Platform.userExtensionDir +/+ "OrangeModels/syx/Plaits-03.syx");
+
+// See what's inside
+DXPlay(\builtin1).describe;
+
+DXPlay(\builtin2).describe;
+
+DXPlay(\builtin3).describe;
+
+
+// Not DX7, but Plaits
+(
+{
+	DXPlay(\builtin1).ar(
+		freq: 220,
+		trig: 0,
+		velocity: 0.6,
+		timbre: 0.9,
+		morph: 0.5,
+		preset: LFNoise0.kr(14).range(0, 31.99).floor,
+		mul: 0.2,
+		add: 0
+	).dup;
+}.play;
+)
+
+
+// Time-travel 1: scrubbing envelope and modulation
+(
+{
+	DXPlay(\builtin1).ar(
+		freq: 220,
+		trig: 0,
+		velocity: 0.6,
+		timbre: 0.7,
+		morph: 0.05 + SinOsc.ar(0.1, mul: 0.03),
+		preset: 26,
+		mul: 0.2,
+		add: 0
+	).dup;
+}.play;
+)
+
+
+// Time-travel 2: reverse envelope
+(
+{
+	DXPlay(\builtin1).ar(
+		freq: 440,
+		trig: 0,
+		velocity: 0.6,
+		timbre: 0.5,
+		morph: LFSaw.ar(0.5, 1).range(1, 0),
+		preset: 21,
+		mul: 0.2,
+		add: 0
+	).dup;
+}.play;
+)
+
+
+// Anything but waltz
+(
+{
+	DXPlay(\builtin1).ar(
+		freq: 440,
+		trig: [LFPulse.ar(1), LFPulse.ar(3)],
+		velocity: [0.7, 0.5],
+		timbre: 0.5,
+		morph: 0.5,
+		preset: MouseX.kr(0, 31.5).floor.poll,
+		mul: 0.2,
+		add: 0
+	);
+}.play;
+)
+
+
+// Drunken quartet
+(
+{
+    var notes = [60, 64, 67, 72].midicps;
+    var trigs = Impulse.kr([2, 2.1, 2.2, 2.3]);
+    var voices = notes.collect { |freq, i|
+                   DXPlay(\builtin1).ar(freq, trigs[i], preset: i * 1);
+    };
+    Splay.ar(voices, level: 0.5);
+}.play;
+)
+
+
+// Sequence without trigger (from Vortex Temporum by Gérard Grisey)
+(
+{
+	var freq = Duty.kr(
+		     MouseY.kr(0.001, 2, 1),
+		     0,
+		     Dseq([69.5, 80.5, 74.5, 83.5, 80.5, 74.5, 80.5, 74.5].midicps, inf)
+	);
+	DXPlay(\builtin1).ar(
+		freq: freq * [1, 1.01],
+		trig: 0,
+		velocity: 0.6,
+		timbre: 0.5,
+		morph: 0.5,
+		preset: MouseX.kr(0, 31.5).floor.poll,
+		mul: 0.2,
+		add: 0
+	);
+}.play;
+)
+
+
+// Sequence with trigger, stretching envelope
+// Technically speaking, "morph=0.3" is shortest release time
+(
+{
+	var trig = TDuty.kr(Dseq([0.25, 0.25, 0.125, 0.125, 1.0], inf));
+	var notes = Dseq([0, 3, 7, 12, 7, 3], inf);
+	var freq = (Demand.kr(trig, 0, notes) + 60).midicps;
+	DXPlay(\builtin1).ar(
+		freq: freq,
+		trig: trig,
+		velocity: 0.7,
+		timbre: 0.6,
+		morph: MouseX.kr(0, 1).poll,
+		preset: 12,
+		mul: 0.2,
+		add: 0
+	).dup;
+}.play;
+)
+
+
+// Free when done
+DXPlay(\builtin1).free;
+
+// or free all
+DXPlay.freeAll;
+::

@@ -1,0 +1,198 @@
+TITLE:: SQArp
+SUMMARY:: Square wave chords/arpeggios
+CATEGORIES:: UGens>Generators>Deterministic
+RELATED:: Classes/SMEmu, Classes/DXPlay
+
+DESCRIPTION::
+Based on Mutable Instruments Plaits Orange Model #8: Four variable square voices for chords or arpeggios.
+
+Original code by: Emilie Gillet (https://github.com/pichenettes/eurorack.git)
+
+CLASSMETHODS::
+
+METHOD:: ar, kr
+
+ARGUMENT:: freq
+Base frequency in Hz.
+
+ARGUMENT:: trig
+Trigger/clock input for the arpeggiator. Each rising edge advances to the next note.
+
+ARGUMENT:: envelope
+Envelope attenuverter (-1 to 1). At 0, no envelope is applied. Positive values affect both outputs, while negative values only affect the square voices output.
+
+ARGUMENT:: pattern
+Arpeggiator pattern selection (0-1). And chord inversion crossfade when no trig is connected.
+
+ARGUMENT:: shape
+Wave shape (0-1). Controls the slave oscillator frequency ratio, creating PWM-like timbral variation.
+
+ARGUMENT:: chord
+Chord selection (0-1) within the bank.
+
+ARGUMENT:: bank
+Chord bank selection (0, 1, or 2).
+TABLE::
+## 0 || Original Plaits chords (11 chords)
+## 1 || Jon Butler chords (17 chords)
+## 2 || Joe McMullen chords (18 chords)
+::
+
+ARGUMENT:: mul
+Output multiplier.
+
+ARGUMENT:: add
+Output offset.
+
+RETURNS::
+An array of two channels:
+LIST::
+## [0] - Square wave voices output
+## [1] - NES triangle voice output
+::
+
+METHOD:: chords
+Prints the list of chord names and their corresponding parameter values.
+
+METHOD:: patterns
+Prints the list of arpeggiator patterns and their corresponding parameter values.
+
+
+EXAMPLES::
+
+CODE::
+// See available chords and patterns
+SQArp.chords;
+
+SQArp.patterns;
+
+
+// No arpeggio
+(
+{
+	SQArp.ar(
+		freq: 220,
+		trig: 0,
+		envelope: 0,
+		pattern: MouseX.kr(0, 1),
+		shape: 0.5,
+		chord: 1,
+		bank: 0,
+		mul: 0.2,
+		add: 0
+	);
+}.scope;
+)
+
+
+// Basic arpeggiator
+(
+{
+	SQArp.ar(
+		freq: 110,
+		trig: Impulse.ar(8),
+		envelope: 0.3,
+		pattern: 0.2,
+		shape: 0.5,
+		chord: 0.3,
+		bank: 0,
+		mul: 0.2,
+		add: 0
+	);
+}.play;
+)
+
+
+// Modulating parameters
+(
+{
+    SQArp.ar(
+		freq: 440,
+		trig: Impulse.ar(6),
+		envelope: SinOsc.kr(0.1).range(-0.5, 0.5),
+		pattern: LFNoise1.kr(0.2).range(0, 1),
+		shape: SinOsc.kr(0.3).range(0.2, 0.8),
+		chord: LFSaw.kr(0.05).range(0, 1),
+		bank: 1,
+		mul: 0.2,
+		add: 0
+	);
+}.play;
+)
+
+
+// As Plaits internal decay envelope
+(
+{
+    var trig = Impulse.ar(4);
+    var env = EnvGen.ar(Env.perc(0.001, 0.1), trig);
+    SQArp.ar(
+        freq: 220 * (1 + (env * 0.5)),  // Pitch drop like FM attenuverter
+        trig: trig,
+        envelope: 0,
+        pattern: 0.5,
+        shape: 0.3 + (env * 0.5),       // Morph sweep like Morph attenuverter
+        chord: 0.5,
+        bank: 0,
+		mul: 0.2,
+		add: 0
+    );
+}.play;
+)
+
+
+// Stereo spread with slight detuning
+(
+{
+	SQArp.ar(
+		freq: [55, 55.4],
+		trig: Impulse.ar(9),
+		envelope: 0.7,
+		pattern: 0.6,
+		shape: [0.4, 0.6],
+		chord: 0.2,
+		bank: 0,
+		mul: 0.2,
+		add: 0
+	)[0];
+}.play;
+)
+
+
+// ".flat" to get all channels at once
+(
+{
+	SQArp.ar(
+		freq: [55, 55.4],
+		trig: Impulse.ar(9),
+		envelope: 0.7,
+		pattern: 0.6,
+		shape: [0.4, 0.6],
+		chord: 0.2,
+		bank: 0,
+		mul: 0.2,
+		add: 0
+	).flat;  // [0][0], [0][1], [1][0], [1][1]
+}.scope;
+)
+
+
+// Random chord progression
+(
+{
+    var chordTrig = Dust.kr(0.5);
+    var chord = TRand.kr(0, 1, chordTrig);
+    var noteTrig = Impulse.ar(12);
+    var sig = SQArp.ar(
+            freq: 82.41,
+            trig: noteTrig,
+            envelope: 0.4,
+            pattern: 0.6,
+            shape: 0.6,
+            chord: chord,
+            bank: 2
+    );
+    (sig[0] * 0.2) + (sig[1] * 0.3) ! 2;
+}.play;
+)
+::

@@ -1,0 +1,108 @@
+TITLE:: SMEmu
+SUMMARY:: String machine emulation
+CATEGORIES:: UGens>Generators>Deterministic
+RELATED:: Classes/SQArp, Classes/DXPlay
+
+DESCRIPTION::
+Based on Mutable Instruments Plaits Orange Model #7: String machine emulation with stereo filter and chorus.
+
+Original code by: Emilie Gillet (https://github.com/pichenettes/eurorack.git)
+
+CLASSMETHODS::
+
+METHOD:: ar
+
+ARGUMENT:: freq
+Base frequency in Hz.
+
+ARGUMENT:: fx
+Controls the filter cutoff and ensemble depth (0-1).
+
+ARGUMENT:: wave
+Interpolation between sawtooth and square waveforms (0-1).
+
+ARGUMENT:: chord
+Selects the chord type (0-1) within the bank.
+
+ARGUMENT:: bank
+Selects the chord bank (0, 1, or 2).
+TABLE::
+## 0 || Original Plaits chords (11 chords)
+## 1 || Jon Butler chords (17 chords)
+## 2 || Joe McMullen chords (18 chords)
+::
+
+ARGUMENT:: mul
+Output multiplier.
+
+ARGUMENT:: add
+Output offset.
+
+RETURNS::
+An array of two audio outputs:
+LIST::
+## [0] - Voices 1 and 3 predominantly
+## [1] - Voices 2 and 4 predominantly
+::
+
+METHOD:: chords
+Prints the list of chord names and their corresponding parameter values.
+
+
+EXAMPLES::
+
+CODE::
+// See available chords
+SMEmu.chords;
+
+
+// Iconic g minor Solina
+(
+{
+	var fadeIn = Line.kr(0, 0.2, 10);
+	SMEmu.ar(freq: 392, fx: 0.8, wave: 0.35, chord: 0.3, bank: 0, mul: fadeIn, add: 0);
+}.play;
+)
+
+
+// Searching something nice
+(
+{
+    var trig = Impulse.ar(4);
+    var env = EnvGen.ar(Env.perc(0.05, 0.3), trig);
+	var sig = SMEmu.ar(
+		    freq: 220,
+		    fx: 1,
+		    wave: MouseX.kr(0, 1).poll(label: "wave"),
+		    chord: MouseY.kr(0, 1).poll(label: "chord"),
+		    bank: 0,
+		    mul: 0.5,
+		    add: 0
+	);
+	sig = LPF.ar(sig, 50 + (env * 9900));
+	FreeVerb.ar(sig * env, 0.4, 0.75, 0.4);
+}.play;
+)
+
+
+// Endless dark diminished
+// Chorus effect is V-shaped curve, "fx=0.5" is dry
+(
+{
+	var freq = Duty.kr(
+		     Dseq([0.8, 0.4, 0.4, 0.8, 0.8], inf),
+		     0,
+		     Dseq([48.8, 42, 46, 47, 48, 48.8, 42, 46, 47, 48].midicps, inf)
+	);
+    SMEmu.ar(
+        freq: freq,
+        fx: 0,
+        wave: 0,
+        chord: 1,
+        bank: 1,
+        mul: 0.5,
+        add: 0
+    );
+}.play;
+)
+::

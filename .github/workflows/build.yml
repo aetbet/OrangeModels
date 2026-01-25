@@ -1,0 +1,118 @@
+name: Build OrangeModels
+permissions:
+  contents: write
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - name: 'macOS-universal'
+            os: macos-latest
+
+          - name: 'Windows-x64'
+            os: windows-latest
+
+          - name: 'Linux-x64'
+            os: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Install 7Zip (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: powershell
+        run: Install-Module 7Zip4PowerShell -Force -Verbose
+
+      - name: Get SC source code
+        run: git clone https://github.com/supercollider/supercollider.git ${{ github.workspace }}/supercollider
+
+      - name: Create Build Environment
+        run: cmake -E make_directory ${{ github.workspace }}/build
+
+
+      - name: Configure CMake (Unix)
+        shell: bash
+        if: matrix.os != 'windows-latest'
+        working-directory: ${{ github.workspace }}/build
+        run: cmake .. -DCMAKE_BUILD_TYPE='Release' -DSC_PATH=${{ github.workspace }}/supercollider
+
+      - name: Configure CMake (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        working-directory: ${{ github.workspace }}\build
+        run: cmake .. -DCMAKE_BUILD_TYPE='Release' -DSC_PATH=${{ github.workspace }}\supercollider
+
+
+      - name: Build (Unix)
+        if: matrix.os != 'windows-latest'
+        working-directory: ${{ github.workspace }}/build
+        shell: bash
+        run: cmake --build . --config "Release" --target install
+
+      - name: Build (Windows)
+        working-directory: ${{ github.workspace }}\build
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: cmake --build . --config "Release" --target install
+
+
+      - name: Zip up build (Unix)
+        if: matrix.os != 'windows-latest'
+        shell: bash
+        working-directory: ${{ github.workspace }}/build
+        run: zip -r OrangeModels-${{ matrix.name }} OrangeModels
+
+      - name: Zip up build (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        working-directory: ${{ github.workspace }}\build
+        run: Compress-7Zip "OrangeModels" -ArchiveFileName "OrangeModels-${{ matrix.name }}.zip" -Format Zip -PreserveDirectoryRoot
+
+
+      - name: Check if release exists
+        id: checkRelease
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const tag = process.env.GITHUB_REF_NAME;
+            try {
+              await github.rest.repos.getReleaseByTag({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                tag
+              });
+              core.setOutput('exists', 'true');
+            } catch (error) {
+              if (error.status === 404) {
+                core.setOutput('exists', 'false');
+              } else {
+                throw error;
+              }
+            }
+
+      - name: Create Release
+        if: steps.checkRelease.outputs.exists == 'false'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: ${{ github.ref_name }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload binaries to release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: ${{ github.workspace }}/build/OrangeModels-${{ matrix.name }}.zip
+          asset_name: OrangeModels-${{ matrix.name }}.zip
+          tag: ${{ github.ref_name }}
+          overwrite: true
