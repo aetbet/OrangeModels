@@ -20,7 +20,7 @@ Orange Model #7: String machine emulation with stereo filter and chorus.
 Orange Model #8: Four variable square voices for chords or arpeggios.
 
 ## Notes
-- Additional chord tables (by Jon Butler and Joe McMullen) from an [alternative firmware](https://github.com/lylepmills/eurorack/tree/master/alt_firmwares) is included.
+- Additional chord tables (by Jon Butler and Joe McMullen) from an [alternative firmware](https://github.com/lylepmills/eurorack/tree/master/alt_firmwares) are included.
 - Internal Low-Pass Gate and Decay Envelope are excluded. Apply them externally.
 - Original Plaits runs at 48kHz. And VCV Rack Plaits does sample rate conversion to make the signal 48kHz internally. UGens here are working at the SuperCollider server sample rate, so their signal would match best at 48kHz. Usually no need to care about this.
 
