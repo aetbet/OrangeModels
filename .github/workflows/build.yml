@@ -32,7 +32,7 @@ jobs:
         run: Install-Module 7Zip4PowerShell -Force -Verbose
 
       - name: Get SC source code
-        run: git clone https://github.com/supercollider/supercollider.git ${{ github.workspace }}/supercollider
+        run: git clone --depth 1 --branch main https://github.com/supercollider/supercollider.git ${{ github.workspace }}/supercollider
 
       - name: Create Build Environment
         run: cmake -E make_directory ${{ github.workspace }}/build
