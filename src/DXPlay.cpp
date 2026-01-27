@@ -623,7 +623,11 @@ void AlgorithmRenderer::Render(
     algorithm = std::min(std::max(algorithm, 0), kNumAlgorithms - 1);
     const uint8_t* opcodes = kAlgorithmOpcodes[algorithm];
 
-    const float fb_scale = feedback_amount ? float(1 << feedback_amount) / 512.0f : 0.0f;
+    int effective_feedback = feedback_amount;
+    if (algorithm == 31 && feedback_amount > 0) {
+        effective_feedback = std::max(feedback_amount - 2, 0);
+    }
+    const float fb_scale = effective_feedback ? float(1 << effective_feedback) / 512.0f : 0.0f;
 
     uint32_t frequency[kNumOperators];
     float amplitude[kNumOperators];
