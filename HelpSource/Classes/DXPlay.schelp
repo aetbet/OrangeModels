@@ -81,6 +81,16 @@ Get the name of a preset by index.
 METHOD:: names
 Array of all 32 preset names.
 
+METHOD:: transpose
+Get the transpose value (in semitones, -24..+24) of a preset by index.
+
+METHOD:: transposes
+Array of transpose values (in semitones, -24..+24) for all 32 presets.
+
+NOTE::
+The DX7 presets are made with a parameter KEY TRANSPOSE, while DXPlay takes an absolute frequency to make the sound.
+An adjustment may be necessary to get correct relative sounding. For example, when making a layer of presets.::
+
 METHOD:: free
 Free the buffer associated with this bank.
 
@@ -101,6 +111,13 @@ DXPlay(\builtin1).describe;
 DXPlay(\builtin2).describe;
 
 DXPlay(\builtin3).describe;
+
+// See transpose values
+DXPlay(\builtin1).transposes;
+
+DXPlay(\builtin2).transpose(0);
+
+DXPlay(\builtin3).transpose([14, 15]);
 
 
 // Not DX7, but Plaits

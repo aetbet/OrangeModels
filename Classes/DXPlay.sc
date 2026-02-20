@@ -1,7 +1,7 @@
 DXPlay {
     classvar <all;  // Dictionary of loaded banks
 
-    var <key, <buffer, <path, <names;
+    var <key, <buffer, <path, <names, <transposes;
 
     *initClass {
         all = IdentityDictionary.new;
@@ -35,6 +35,7 @@ DXPlay {
         key = argKey;
         path = argPath;
         names = Array.newClear(32);
+        transposes = Array.newClear(32);
 
         // Read SysEx file
         file = File(path, "rb");
@@ -80,6 +81,9 @@ DXPlay {
             });
             var name = nameArray.collect(_.asAscii).join;
             names[i] = name.trim; // Remove leading/trailing spaces
+            // Transpose byte is at offset 117 within each 128-byte voice.
+            // Store as semitone offset: raw 0..48 -> -24..+24
+            transposes[i] = ((bytes[voiceOffset + 117].asInteger.bitAnd(0x7F)).clip(0, 48) - 24);
         };
     }
 
@@ -97,6 +101,10 @@ DXPlay {
         ^names[index.clip(0, 31)]
     }
 
+    transpose { |index|
+        ^transposes[index.clip(0, 31)]
+    }
+
     bufnum {
         ^buffer !? { buffer.bufnum } ?? { -1 }
     }
@@ -104,6 +112,7 @@ DXPlay {
     free {
         buffer !? { buffer.free };
         buffer = nil;
+        transposes = nil;
         all[key] = nil;
     }
 
