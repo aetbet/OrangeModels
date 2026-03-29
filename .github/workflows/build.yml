@@ -19,15 +19,21 @@ jobs:
           - name: 'Windows-x64'
             os: windows-latest
 
+          - name: 'Windows-arm64'
+            os: windows-11-arm
+
           - name: 'Linux-x64'
             os: ubuntu-latest
+
+          - name: 'Linux-arm64'
+            os: ubuntu-24.04-arm
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
 
       - name: Install 7Zip (Windows)
-        if: matrix.os == 'windows-latest'
+        if: matrix.os == 'windows-latest' && matrix.os == 'windows-11-arm'
         shell: powershell
         run: Install-Module 7Zip4PowerShell -Force -Verbose
 
@@ -40,38 +46,38 @@ jobs:
 
       - name: Configure CMake (Unix)
         shell: bash
-        if: matrix.os != 'windows-latest'
+        if: matrix.os != 'windows-latest' && matrix.os != 'windows-11-arm'
         working-directory: ${{ github.workspace }}/build
         run: cmake .. -DCMAKE_BUILD_TYPE='Release' -DSC_PATH=${{ github.workspace }}/supercollider
 
       - name: Configure CMake (Windows)
-        if: matrix.os == 'windows-latest'
+        if: matrix.os == 'windows-latest' && matrix.os == 'windows-11-arm'
         shell: pwsh
         working-directory: ${{ github.workspace }}\build
         run: cmake .. -DCMAKE_BUILD_TYPE='Release' -DSC_PATH=${{ github.workspace }}\supercollider
 
 
       - name: Build (Unix)
-        if: matrix.os != 'windows-latest'
+        if: matrix.os != 'windows-latest' && matrix.os != 'windows-11-arm'
         working-directory: ${{ github.workspace }}/build
         shell: bash
         run: cmake --build . --config "Release" --target install
 
       - name: Build (Windows)
         working-directory: ${{ github.workspace }}\build
-        if: matrix.os == 'windows-latest'
+        if: matrix.os == 'windows-latest' && matrix.os == 'windows-11-arm'
         shell: pwsh
         run: cmake --build . --config "Release" --target install
 
 
       - name: Zip up build (Unix)
-        if: matrix.os != 'windows-latest'
+        if: matrix.os != 'windows-latest' && matrix.os != 'windows-11-arm'
         shell: bash
         working-directory: ${{ github.workspace }}/build
         run: zip -r OrangeModels-${{ matrix.name }} OrangeModels
 
       - name: Zip up build (Windows)
-        if: matrix.os == 'windows-latest'
+        if: matrix.os == 'windows-latest' && matrix.os == 'windows-11-arm'
         shell: pwsh
         working-directory: ${{ github.workspace }}\build
         run: Compress-7Zip "OrangeModels" -ArchiveFileName "OrangeModels-${{ matrix.name }}.zip" -Format Zip -PreserveDirectoryRoot
