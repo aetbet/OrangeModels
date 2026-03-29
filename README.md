@@ -23,6 +23,7 @@ Orange Model #8: Four variable square voices for chords or arpeggios.
 - Additional chord tables (by Jon Butler and Joe McMullen) from an [alternative firmware](https://github.com/lylepmills/eurorack/tree/master/alt_firmwares) are included.
 - Internal Low-Pass Gate and Decay Envelope are excluded. Apply them externally.
 - According to [Dexed](https://github.com/asb2m10/dexed.git) Mk I engine, the feedback value for algorithm 32 is adjusted in DXPlay.
+- wslib quark is necessary for ".trim" in DXPlay.sc. Alternative manual trimming is available (see DXPlay.sc).
 - Original Plaits runs at 48kHz. And VCV Rack Plaits does sample rate conversion to make the signal 48kHz internally. UGens here are working at the SuperCollider server sample rate, so their signal would match best at 48kHz. Usually no need to care about this.
 
 ## Installation

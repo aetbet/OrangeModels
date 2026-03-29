@@ -70,6 +70,7 @@ DXPlay {
         // Use unsigned masking because Int8Array entries may be signed (-128..127)
         offset = if((bytes[0].asInteger.bitAnd(0xFF) == 0xF0) and: { bytes[1].asInteger.bitAnd(0xFF) == 0x43 }) { 6 } { 0 };
 
+        // wslib quark is necessary for ".trim", use manual trimming below if it's not available
         // Each voice is 128 bytes, name is at offset 118-127 (10 chars)
         32.do { |i|
             var voiceOffset = offset + (i * 128);
@@ -85,6 +86,37 @@ DXPlay {
             // Store as semitone offset: raw 0..48 -> -24..+24
             transposes[i] = ((bytes[voiceOffset + 117].asInteger.bitAnd(0x7F)).clip(0, 48) - 24);
         };
+
+        /*
+        // Alternative manual trimming if wslib is not available
+        // Each voice is 128 bytes, name is at offset 118-127 (10 chars)
+        32.do { |i|
+            var voiceOffset, nameOffset, nameArray, first, last, name, s;
+            voiceOffset = offset + (i * 128);
+            nameOffset = voiceOffset + 118;
+            nameArray = Array.fill(10, { |j|
+                var char = bytes[nameOffset + j].asInteger.bitAnd(0x7F);
+                // Replace all control characters (0-31) and DEL (127) with space
+                if((char < 32) or: { char == 127 }) { 32 } { char }
+            });
+            // Convert bytes -> chars and trim leading/trailing spaces manually
+            first = 0;
+            while { (first < nameArray.size) and: { nameArray[first] == 32 } } { first = first + 1 };
+            last = nameArray.size - 1;
+            while { (last >= 0) and: { nameArray[last] == 32 } } { last = last - 1 };
+            name = if (first <= last) {
+                s = "";
+                first.to(last).do { |j| s = s ++ nameArray[j].asAscii };
+                s
+            } {
+                ""
+            };
+            names[i] = name;
+            // Transpose byte is at offset 117 within each 128-byte voice.
+            // Store as semitone offset: raw 0..48 -> -24..+24
+            transposes[i] = ((bytes[voiceOffset + 117].asInteger.bitAnd(0x7F)).clip(0, 48) - 24);
+        };
+        */
     }
 
     describe {
