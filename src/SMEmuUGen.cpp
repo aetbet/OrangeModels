@@ -64,5 +64,5 @@ void SMEmuUGen::next(int nSamples) {
 
 PluginLoad(SMEmuUGens) {
     ft = inTable;
-    registerUnit<SMEmuUGen>(ft, "SMEmu", false);
+    registerUnit<SMEmuUGen>(ft, "SMEmuUGen", false);
 }

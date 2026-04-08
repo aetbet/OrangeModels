@@ -1,4 +1,4 @@
-SMEmu : MultiOutUGen {
+SMEmuUGen : MultiOutUGen {
     *ar { |freq = 440.0, fx = 0.5, wave = 0.5, chord = 0.0, bank = 0, mul = 1.0, add = 0.0|
         ^this.multiNew('audio', freq, fx, wave, chord, bank).madd(mul, add);
     }
@@ -68,5 +68,48 @@ Joe McMullen (bank: 2)
 
     checkInputs {
         ^this.checkValidInputs;
+    }
+}
+
+SMEmu {
+    *ar { |freq = 440.0, fx = 0.5, wave = 0.5, chord = 0.0, bank = 0, mul = 1.0, add = 0.0|
+        var freqArr, fxArr, waveArr, chordArr, bankArr, mulArr, addArr;
+        var numChannels, results;
+
+        freqArr = if(freq.isArray) { freq } { [freq] };
+        fxArr = if(fx.isArray) { fx } { [fx] };
+        waveArr = if(wave.isArray) { wave } { [wave] };
+        chordArr = if(chord.isArray) { chord } { [chord] };
+        bankArr = if(bank.isArray) { bank } { [bank] };
+        mulArr = if(mul.isArray) { mul } { [mul] };
+        addArr = if(add.isArray) { add } { [add] };
+
+        numChannels = [freqArr, fxArr, waveArr, chordArr, bankArr, mulArr, addArr]
+            .collect(_.size).maxItem;
+
+        results = numChannels.collect { |i|
+            SMEmuUGen.ar(
+                freqArr.wrapAt(i),
+                fxArr.wrapAt(i),
+                waveArr.wrapAt(i),
+                chordArr.wrapAt(i),
+                bankArr.wrapAt(i),
+                mulArr.wrapAt(i),
+                addArr.wrapAt(i)
+            )
+        };
+
+        if(numChannels == 1) {
+            ^results[0]
+        };
+
+        ^[
+            results.collect { |r| r[0] },
+            results.collect { |r| r[1] }
+        ]
+    }
+
+    *chords {
+        SMEmuUGen.chords;
     }
 }
