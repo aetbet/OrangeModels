@@ -90,7 +90,7 @@ SQArp.patterns;
 {
 	SQArp.ar(
 		freq: 110,
-		trig: Impulse.ar(8),
+		trig: Impulse.kr(8),
 		envelope: 0.3,
 		pattern: 0.2,
 		shape: 0.5,
@@ -108,7 +108,7 @@ SQArp.patterns;
 {
     SQArp.ar(
 		freq: 440,
-		trig: Impulse.ar(6),
+		trig: Impulse.kr(6),
 		envelope: SinOsc.kr(0.1).range(-0.5, 0.5),
 		pattern: LFNoise1.kr(0.2).range(0, 1),
 		shape: SinOsc.kr(0.3).range(0.2, 0.8),
@@ -124,7 +124,7 @@ SQArp.patterns;
 // As Plaits internal decay envelope
 (
 {
-    var trig = Impulse.ar(4);
+    var trig = Impulse.kr(4);
     var env = EnvGen.ar(Env.perc(0.001, 0.1), trig);
     SQArp.ar(
         freq: 220 * (1 + (env * 0.5)),  // Pitch drop like FM attenuverter
@@ -146,7 +146,7 @@ SQArp.patterns;
 {
 	SQArp.ar(
 		freq: [55, 55.4],
-		trig: Impulse.ar(9),
+		trig: Impulse.kr(9),
 		envelope: 0.7,
 		pattern: 0.6,
 		shape: [0.4, 0.6],
@@ -164,7 +164,7 @@ SQArp.patterns;
 {
 	SQArp.ar(
 		freq: [55, 55.4],
-		trig: Impulse.ar(9),
+		trig: Impulse.kr(9),
 		envelope: 0.7,
 		pattern: 0.6,
 		shape: [0.4, 0.6],
@@ -182,7 +182,7 @@ SQArp.patterns;
 {
     var chordTrig = Dust.kr(0.5);
     var chord = TRand.kr(0, 1, chordTrig);
-    var noteTrig = Impulse.ar(12);
+    var noteTrig = Impulse.kr(12);
     var sig = SQArp.ar(
             freq: 82.41,
             trig: noteTrig,

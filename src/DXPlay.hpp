@@ -317,6 +317,7 @@ private:
 
     float lpf_state_;
     float lpf_coeff_;
+    float last_valid_freq_hz_;
 };
 
 }  // namespace DXPlay

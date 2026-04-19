@@ -883,10 +883,12 @@ const Patch& PresetBank::GetPatch(int index) const {
 DXPlayEngine::DXPlayEngine() : active_voice_(kNumVoices - 1), rendered_voice_(0) {
     std::memset(acc_buffer_, 0, sizeof(acc_buffer_));
     std::memset(gate_samples_, 0, sizeof(gate_samples_));
+    last_valid_freq_hz_ = 440.0f;
 }
 
 void DXPlayEngine::Init(float sample_rate) {
     sample_rate_ = sample_rate;
+    last_valid_freq_hz_ = 440.0f;
     for (int i = 0; i < kNumVoices; ++i) {
         voices_[i].Init(sample_rate);
         gate_samples_[i] = 0;
@@ -924,6 +926,12 @@ void DXPlayEngine::Render(
     size_t size) {
 
     const Patch& patch = bank_.GetPatch(preset);
+
+    if (!std::isfinite(freq_hz) || freq_hz <= 0.0f) {
+        freq_hz = last_valid_freq_hz_;
+    } else {
+        last_valid_freq_hz_ = freq_hz;
+    }
 
     float note = 12.0f * std::log2(freq_hz / 440.0f) + 69.0f;
 

@@ -39,11 +39,15 @@ private:
         float freq = freqIn[0];
 
         bool trig = false;
-        for (int i = 0; i < nSamples; ++i) {
-            if (trigIn[i] > 0.5f) {
-                trig = true;
-                break;
+        if (inRate(1) == calc_FullRate) {
+            for (int i = 0; i < nSamples; ++i) {
+                if (trigIn[i] > 0.5f) {
+                    trig = true;
+                    break;
+                }
             }
+        } else {
+            trig = trigIn[0] > 0.5f;
         }
 
         float envelope = envelopeIn[0];
